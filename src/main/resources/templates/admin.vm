@@ -1,0 +1,120 @@
+<html>
+<head>
+    <title>Automatic Review Creation for New Commits</title>
+    <meta name="decorator" content="atl.admin"/>
+    <meta name="admin.sectionName" content="Automatic Review Creation"/>
+</head>
+<body>
+<form method="post">
+    <table class="adminTable">
+        <tbody>
+            <tr>
+                <td>
+                    <p>
+                    This plugin subscribes to commit events and creates a review for
+                    each commit.
+                    </p>
+                    <p>
+                    Auto review creation can be enabled/disabled on a
+                    per-project basis. Enabled projects must be bound to a FishEye repository
+                    and must have a default Moderator configured in the admin section.
+                    </p>
+                    <p>
+                        Run plugin as user (not used as review moderator):
+                        <input type="text" size="15" name="username" value="#if ($username)$username#end"/>
+                    </p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    #if ($username)
+    <table class="adminTable sortable">
+        <thead>
+        <th>Enabled</th>
+        <th>Project</th>
+        <th>Project Name</th>
+        <th>Review Moderator</th>
+        </thead>
+        <tbody>
+        #foreach ($project in $projects)
+        <tr>
+            <td>
+                <input type="checkbox" name="enabled" value="$project.Key"#if ($project.Enabled) checked="true"#end/>
+            </td>
+            <td>
+                $project.Key
+            </td>
+            <td>
+                $project.Name
+            </td>
+            <td>
+            #if ($stringUtils.isEmpty($project.moderator))
+                <span title="Automatic review creation for this project will not work without a moderator." style="color: DarkRed">
+                    No moderator set. <a href="${contextPath}/admin/editProject.do?id=$project.id">[Specify one now]</a></span>
+            #else
+                $project.moderator
+            #end
+            </td>
+        </tr>
+        #end
+        </tbody>
+    </table>
+
+    <table class="adminTable">
+        <thead>
+            <th colspan="2">Configuration</th>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="2">
+                    <select name="createMode">
+                        ## these strings MUST represent the CreateMode enum's string values:
+                        <option value="ALWAYS"#if ($createMode == "ALWAYS") selected="selected"#end>Always</option>
+                        <option value="NEVER"#if ($createMode == "NEVER") selected="selected"#end>Never</option>
+                    </select>
+                    create reviews automatically, except for:
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    commits made by users:
+                </td>
+                <td>
+                    <textarea title="Invalid usernames are dropped. Use commas, whitespace and/or newlines as separators."
+                              name="committerNames">$stringUtils.join($committerNames, ", ")</textarea><br>
+                    (comma-separated list of <em>Crucible</em> usernames)
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    or users in groups:
+                </td>
+                <td>
+                    <textarea title="Group names are not validated. Use commas, whitespace and/or newlines as separators."
+                              name="groupNames">$stringUtils.join($groupNames, ", ")</textarea><br>
+                    (comma-separated list of groups)
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <hr>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="checkbox" id="iterative" name="iterative"#if($iterative) checked="true"#end>
+                    <label for="iterative" title="Automatically add commits to the review that is mentioned in the commit message (instead of always creating a new review).">
+                        Enable iterative reviews</label>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    #else
+    <p style="color: DarkRed">Specify a valid (admin) user for this plugin to run as.</p>
+    #end
+    <p>
+        <input type="submit" value="save"/>
+    </p>
+</form>
+</body>
+</html>
